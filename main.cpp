@@ -20,6 +20,12 @@
 #include <cstdlib>
 #include <iostream>
 #include <vector>
+#include <random>
+
+#ifdef WIN32
+#include <conio.h>
+#include <windows.h>
+#endif
 
 /* Project namespace */
 namespace snake_game {
@@ -239,10 +245,12 @@ class Field : public Snake {
    * RETURNS: None.
    */
   void Keyboard(bool *gameOver) {
-    // todo make cross-platform
     if (_kbhit()) {
+#ifndef WIN32
       int k = getchar();
-
+#else
+      int k = _getch();
+#endif
       enum Arrows : int {
         kLeftArrow = 37,
         kUpArrow,
@@ -314,7 +322,7 @@ class Field : public Snake {
 
     if (x_ == fruit_x_ && y_ == fruit_y_) {
       /* Random seed value for rand based on time */
-      srand(static_cast<unsigned>(time(0)));
+      srand(static_cast<unsigned>(time(nullptr)));
       score_ += 10;
       fruit_x_ = rand() % width_;
       fruit_y_ = rand() % height_;
@@ -323,7 +331,8 @@ class Field : public Snake {
 
     if (x_ == anti_fruit_x_ && y_ == anti_fruit_y_) {
       /* Random seed value for rand based on time */
-      srand(static_cast<unsigned>(time(0)));
+      srand(static_cast<unsigned>(time(nullptr)));
+
       score_ += 20;
       anti_fruit_x_ = rand() % width_;
       anti_fruit_y_ = rand() % height_;
@@ -372,5 +381,8 @@ int main() {
   }
 
   std::cout << "===== GAME OVER =====" << std::endl;
+#ifdef WIN32
+  _getch();  /* Wait for ke press */
+#endif
   return 0;
 }

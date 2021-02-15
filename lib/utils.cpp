@@ -13,14 +13,18 @@
  * No part of this file may be changed without agreement of
  * the above-mentioned authors
  */
+
+#ifndef WIN32
 #include <termios.h>
-#include <cstdio>
-#include <cstdlib>  /* Included for std::system */
 /* ioctl documentation https://man7.org/linux/man-pages/man2/ioctl.2.html */
 #include <sys/ioctl.h>
-#include <ctime>
 /* For the exec family of functions: https://pubs.opengroup.org/onlinepubs/007904875/functions/exec.html */
 #include <unistd.h>
+#endif
+
+#include <cstdio>
+#include <cstdlib>  /* Included for std::system */
+#include <ctime>
 
 #include "utils.hpp"
 
@@ -32,6 +36,7 @@
  * ARGUMENTS: None.
  * RETURNS: (bytesWaiting) number of bytes of input waiting to be read
  */
+#ifndef WIN32
 int snake_game::_kbhit() {
   static const int STDIN = 0;
   static bool initialized = false;
@@ -50,6 +55,7 @@ int snake_game::_kbhit() {
   ioctl(STDIN, FIONREAD, &bytesWaiting);
   return bytesWaiting;
 }
+#endif
 
 /* Cross-platform sleep function
  *
@@ -71,7 +77,7 @@ void snake_game::sleepcp(unsigned long milliseconds) {
  * RETURNS: None.
  */
 void snake_game::clear_background() {
-#ifdef WINDOWS
+#ifdef WIN32
   /* Todo: use safer execl */
   std::system("cls");
 #else

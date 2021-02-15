@@ -28,7 +28,9 @@ namespace snake_game {
  * ARGUMENTS: None.
  * RETURNS: (bytesWaiting) number of bytes of input waiting to be read
  */
+#ifndef WIN32
 int _kbhit();
+#endif
 
 /* Cross-platform sleep function
  *

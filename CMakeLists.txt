@@ -7,8 +7,16 @@ if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX") # CMake already contains W3 in its flags
 else ()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 \
+
       -Wall -Wextra -Werror -O0 -g -fsanitize=address -fno-omit-frame-pointer \
       -pedantic \
+      -Wno-unused-variable \
+      -Wno-infinite-recursion \
+      -Werror=implicit-function-declaration \
+      -Wno-shadow-field-in-constructor-modified \
+      -Wno-shadow-ivar \
+      -Wuninitialized \
+      -Wunused-label \
       -Wshadow \
       -Wconversion \
       -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC \

@@ -20,6 +20,8 @@
 
 /* Project namespace */
 namespace snake_game {
+
+#ifndef WIN32
 /* Getting keyboard input without blocking function.
  * This is an alternative to the Windows _kbinit() method.
  * This implementation is sourced from this article:
@@ -28,7 +30,6 @@ namespace snake_game {
  * ARGUMENTS: None.
  * RETURNS: (bytesWaiting) number of bytes of input waiting to be read
  */
-#ifndef WIN32
 int _kbhit();
 #endif
 

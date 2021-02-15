@@ -28,6 +28,7 @@
 
 #include "utils.hpp"
 
+#ifndef WIN32
 /* Getting keyboard input without blocking in POSIX systems function.
  * This is an alternative to the Windows _kbinit() method.
  * This implementation is sourced from this article:
@@ -36,7 +37,6 @@
  * ARGUMENTS: None.
  * RETURNS: (bytesWaiting) number of bytes of input waiting to be read
  */
-#ifndef WIN32
 int snake_game::_kbhit() {
   static const int STDIN = 0;
   static bool initialized = false;
@@ -44,11 +44,11 @@ int snake_game::_kbhit() {
 
   if (!initialized) {
     /* Use termios to turn off line buffering */
-    termios term;
+    termios term{};
     tcgetattr(STDIN, &term);
     term.c_lflag &= static_cast<unsigned long>(~ICANON);  /* Explicit cast from int to unsigned long */
     tcsetattr(STDIN, TCSANOW, &term);
-    setbuf(stdin, NULL);
+    setbuf(stdin, nullptr);
     initialized = true;
   }
 

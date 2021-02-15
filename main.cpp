@@ -173,15 +173,21 @@ class Field : public Snake {
    * RETURNS: None.
    */
   explicit Field(unsigned mode) : x_(width_ / 2), y_(height_ / 2), score_(0) {
-    srand(static_cast<unsigned>(time(0)));
-    fruit_x_ = rand() % width_;
-    fruit_y_ = rand() % height_;
+    /* Random device setup */
+    std::random_device rd;
+    mt = std::mt19937(rd());
+    dist_w = std::uniform_real_distribution<int> (0, width_);
+    dist_h = std::uniform_real_distribution<int> (0, height_);
+
+    fruit_x_ = dist_w(mt);
+    fruit_y_ = dist_h(mt);
+
     switch (mode) {
       case 1:
       default:anti_fruit_x_ = anti_fruit_y_ = -1;
         break;
-      case 2:anti_fruit_x_ = rand() % width_;
-        anti_fruit_y_ = rand() % height_;
+      case 2:anti_fruit_x_ = dist_w(mt);
+        anti_fruit_y_ = dist_h(mt);
         break;
     }
   }
@@ -322,20 +328,18 @@ class Field : public Snake {
 
     if (x_ == fruit_x_ && y_ == fruit_y_) {
       /* Random seed value for rand based on time */
-      srand(static_cast<unsigned>(time(nullptr)));
       score_ += 10;
-      fruit_x_ = rand() % width_;
-      fruit_y_ = rand() % height_;
+      fruit_x_ = dist_w(mt);
+      fruit_y_ = dist_h(mt);
       s_.IncreaseTail();
     }
 
     if (x_ == anti_fruit_x_ && y_ == anti_fruit_y_) {
       /* Random seed value for rand based on time */
-      srand(static_cast<unsigned>(time(nullptr)));
 
       score_ += 20;
-      anti_fruit_x_ = rand() % width_;
-      anti_fruit_y_ = rand() % height_;
+      anti_fruit_x_ = dist_w(mt);
+      anti_fruit_y_ = dist_h(mt);
       s_.DecreaseTail();
     }
   }
@@ -348,6 +352,9 @@ class Field : public Snake {
   int anti_fruit_x_, anti_fruit_y_;
   int score_;
   Snake s_;
+  std::mt19937 mt;
+  std::uniform_real_distribution<int> dist_w;
+  std::uniform_real_distribution<int> dist_h;
 };
 
 }

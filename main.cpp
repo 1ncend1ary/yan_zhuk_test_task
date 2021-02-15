@@ -1,187 +1,282 @@
-#include <iostream>
-#include <ctime>
+/*************************
+ *  Copyright (C) 2021
+ *  Aleksei Seliverstov
+ *************************/
+
+/* FILE NAME   : main.cpp
+ * PURPOSE     : Main program module.
+ * PROGRAMMER  : CSC'2021.
+ *               Aleksei Seliverstov.
+ * LAST UPDATE : 15.02.21.
+ * NOTE        : Namespace 'snake_game'.
+ *               This project follows the following code style:
+ *               https://google.github.io/styleguide/cppguide.html
+ *
+ * No part of this file may be changed without agreement of
+ * the above-mentioned authors
+ */
+
+#include "lib/utils.hpp"
 #include <cstdlib>
-#include <sys/ioctl.h>
-#include <termios.h>
-#include <cstdio>
+#include <iostream>
+#include <vector>
 
-bool gameOver;
-const int width = 20;
-const int height = 20;
-int x, y, fruitX, fruitY, score;
-int tailX[100], tailY[100];
-int nTail;
-enum eDirecton { STOP = 0, LEFT, RIGHT, UP, DOWN };
-eDirecton dir;
-
-/// http://www.flipcode.com/archives/_kbhit_for_Linux.shtml
-/// Check KeyBoard Pressed Or Not
-int _kbhit() {
-  static const int STDIN = 0;
-  static bool initialized = false;
-  int bytesWaiting;
-
-  if (!initialized) {
-    // Use termios to turn off line buffering
-    termios term;
-    tcgetattr(STDIN, &term);
-    term.c_lflag &= ~ICANON;
-    tcsetattr(STDIN, TCSANOW, &term);
-    setbuf(stdin, NULL);
-    initialized = true;
+namespace snake_game {
+class Snake {
+ public:
+  Snake() : dir_(Direction::kStop) {
+    tail_x_.resize(1);
+    tail_y_.resize(1);
   }
 
-  ioctl(STDIN, FIONREAD, &bytesWaiting);
-  return bytesWaiting;
-}
+ protected:
+// Naming according to https://google.github.io/styleguide/cppguide.html#Enumerator_Names
+  enum struct Direction {
+    kStop,  // If the first enumerator value has no value, it defaults to 0
+    kLeft,
+    kRight,
+    kUp,
+    kDown
+  };
 
-void Setup() {
-  gameOver = false;
-  dir = STOP;
-  x = width / 2;
-  y = height / 2;
-  fruitX = rand() % width;
-  fruitY = rand() % height;
-  score = 0;
-}
+ public:
+  int GetTailX(const size_t idx) const {
+    return tail_x_.at(idx);
+  }
+  int GetTailY(const size_t idx) const {
+    return tail_y_.at(idx);
+  }
 
-/// Clear Background
-void clear_background() {
-  const char *clearcommand = "clear";
-  system(clearcommand);
-}
+  void SetTailX(const size_t idx, int value) {
+    if (idx < tail_x_.size()) {
+      tail_x_[idx] = value;
+    }
+  }
+  void SetTailY(const size_t idx, int value) {
+    if (idx < tail_y_.size()) {
+      tail_y_[idx] = value;
+    }
+  }
 
-void Draw() {
-  clear_background();
-//  system("cls"); //system("clear");
-  std::cout << std::endl;
-  std::cout << " ";
-  for (int i = 0; i < width + 2; i++)
-    std::cout << "#";
-  std::cout << std::endl;
+  size_t GetNTail() const {
+    return tail_x_.size() - 1;
+  }
+  void IncreaseTail() {
+    tail_x_.push_back(0);
+    tail_y_.push_back(0);
+  }
+  void DecreaseTail() {
+    if (tail_x_.size() > 1) {
+      tail_x_.pop_back();
+      tail_y_.pop_back();
+    }
+  }
 
-  for (int i = 0; i < height; i++) {
-    for (int j = 0; j < width; j++) {
-      if (j == 0)
-        std::cout << " #";
-      if (i == y && j == x)
-        std::cout << "O";
-      else if (i == fruitY && j == fruitX)
-        std::cout << "F";
-      else {
-        bool print = false;
-        for (int k = 0; k < nTail; k++) {
-          if (tailX[k] == j && tailY[k] == i) {
-            std::cout << "o";
-            print = true;
-          }
-        }
-        if (!print)
-          std::cout << " ";
-      }
+  Direction GetDir() const {
+    return dir_;
+  }
+  void SetDir(Direction dir) {
+    dir_ = dir;
+  }
 
-      if (j == width - 1)
-        std::cout << "#";
+ private:
+  std::vector<int> tail_x_;
+  std::vector<int> tail_y_;
+
+  Direction dir_;
+};
+
+class Field : public Snake {
+ public:
+  explicit Field(unsigned mode) : x_(width_ / 2), y_(height_ / 2), score_(0) {
+    srand(static_cast<unsigned>(time(0)));
+    fruit_x_ = rand() % width_;
+    fruit_y_ = rand() % height_;
+    switch (mode) {
+      case 1:
+      default:anti_fruit_x_ = anti_fruit_y_ = -1;
+        break;
+      case 2:anti_fruit_x_ = rand() % width_;
+        anti_fruit_y_ = rand() % height_;
+        break;
+    }
+  }
+
+  void Draw() {
+    clear_background();
+    std::cout << std::endl;
+    std::cout << " ";
+    for (int i = 0; i < width_ + 2; i++) {
+      std::cout << "#";
     }
     std::cout << std::endl;
+
+    for (int i = 0; i < height_; i++) {
+      for (int j = 0; j < width_; j++) {
+        if (j == 0) {
+          std::cout << " #";
+        }
+        if (i == y_ && j == x_) {
+          std::cout << "o";
+        } else if (i == fruit_y_ && j == fruit_x_) {
+          std::cout << "F";
+        } else if (i == anti_fruit_y_ && j == anti_fruit_x_) {
+          std::cout << "X";
+        } else {
+          bool print = false;
+          for (size_t k = 0; k < s_.GetNTail(); k++) {
+            if (s_.GetTailX(k) == j && s_.GetTailY(k) == i) {
+              std::cout << "o";
+              print = true;
+            }
+          }
+          if (!print) {
+            std::cout << " ";
+          }
+        }
+
+        if (j == width_ - 1) {
+          std::cout << "#";
+        }
+      }
+      std::cout << std::endl;
+    }
+
+    std::cout << " ";
+    for (int i = 0; i < width_ + 2; i++) {
+      std::cout << "#";
+    }
+    std::cout << std::endl;
+    std::cout << " Score:" << score_ << "     " << "x: " << x_ << " y: " << y_ << std::endl;
   }
 
-  std::cout << " ";
-  for (int i = 0; i < width + 2; i++)
-    std::cout << "#";
-  std::cout << std::endl;
-  std::cout << " Score:" << score << std::endl;
+  void Keyboard(bool *gameOver) {
+    // todo make cross-platform
+    if (_kbhit()) {
+      int k = getchar();
+
+      enum Arrows : int {
+        kLeftArrow = 37,
+        kUpArrow,
+        kRightArrow,
+        kDownArrow
+      };
+      switch (k) {
+        case 'd':
+        case kRightArrow:s_.SetDir(Direction::kRight);
+          break;
+        case 'a':
+        case kLeftArrow:s_.SetDir(Direction::kLeft);
+          break;
+        case 'w':
+        case kUpArrow:s_.SetDir(Direction::kUp);
+          break;
+        case 's':
+        case kDownArrow:s_.SetDir(Direction::kDown);
+          break;
+        case 'q':s_.SetDir(Direction::kStop);
+          *gameOver = true;
+          break;
+        default:break;
+      }
+    }
+  }
+
+  void Logic(bool *gameOver) {
+    int prevX = s_.GetTailX(0);
+    int prevY = s_.GetTailY(0);
+    s_.SetTailX(0, x_);
+    s_.SetTailY(0, y_);
+
+    for (size_t i = 1; i < s_.GetNTail(); i++) {
+      int prev2X = s_.GetTailX(i);
+      int prev2Y = s_.GetTailY(i);
+
+      s_.SetTailX(i, prevX);
+      s_.SetTailY(i, prevY);
+
+      prevX = prev2X;
+      prevY = prev2Y;
+    }
+    switch (s_.GetDir()) {
+      case Direction::kLeft:x_--;
+        break;
+      case Direction::kRight:x_++;
+        break;
+      case Direction::kUp:y_--;
+        break;
+      case Direction::kDown:y_++;
+        break;
+      default:break;
+    }
+    if (x_ > width_ || x_ < 0 || y_ > height_ || y_ < 0) {
+      *gameOver = true;
+    }
+
+    for (size_t i = 0; i < s_.GetNTail(); ++i) {
+      if (s_.GetTailX(i) == x_ && s_.GetTailY(i) == y_) {
+        *gameOver = true;
+      }
+    }
+
+    if (x_ == fruit_x_ && y_ == fruit_y_) {
+      /* Random seed value for rand based on time */
+      srand(static_cast<unsigned>(time(0)));
+      score_ += 10;
+      fruit_x_ = rand() % width_;
+      fruit_y_ = rand() % height_;
+      s_.IncreaseTail();
+    }
+
+    if (x_ == anti_fruit_x_ && y_ == anti_fruit_y_) {
+      /* Random seed value for rand based on time */
+      srand(static_cast<unsigned>(time(0)));
+      score_ += 20;
+      anti_fruit_x_ = rand() % width_;
+      anti_fruit_y_ = rand() % height_;
+      s_.DecreaseTail();
+    }
+  }
+
+ private:
+  const static int width_ = 50;
+  const static int height_ = 20;
+  int x_, y_;
+  int fruit_x_, fruit_y_;
+  int anti_fruit_x_, anti_fruit_y_;
+  int score_;
+  Snake s_;
+};
+
 }
-
-/// Reaction On Press Button Of Keyboard
-void reaction_on_keyboard(const char k) {
-  if (k == 'd' || k == '6') {
-    // Right Turn
-    dir = RIGHT;
-
-  } else if (k == 'a' || k == '4') {
-    // Left Turn
-    dir = LEFT;
-  } else if (k == 'w' || k == '8') {
-
-    // Turn UP
-    dir = UP;
-  } else if (k == 's' || k == '2') {
-    // Turn Down
-    dir = DOWN;
-  } else if (k == 'q' || k == 'z' || k == 'c') {
-    gameOver = true;
-  }
-
-}
-
-void Input() {
-  if (_kbhit()) {
-    char k;
-    std::cin >> k; /// Character
-    reaction_on_keyboard(k);
-  }
-}
-void Logic() {
-  int prevX = tailX[0];
-  int prevY = tailY[0];
-  int prev2X, prev2Y;
-  tailX[0] = x;
-  tailY[0] = y;
-  for (int i = 1; i < nTail; i++) {
-    prev2X = tailX[i];
-    prev2Y = tailY[i];
-    tailX[i] = prevX;
-    tailY[i] = prevY;
-    prevX = prev2X;
-    prevY = prev2Y;
-  }
-  switch (dir) {
-    case LEFT:x--;
-      break;
-    case RIGHT:x++;
-      break;
-    case UP:y--;
-      break;
-    case DOWN:y++;
-      break;
-    default:break;
-  }
-  if (x > width || x < 0 || y > height || y < 0)
-    gameOver = true;
-
-  for (int i = 0; i < nTail; i++)
-    if (tailX[i] == x && tailY[i] == y)
-      gameOver = true;
-
-  if (x == fruitX && y == fruitY) {
-    // Random seed value for rand based on time
-    srand(time(0));
-    score += 10;
-    fruitX = rand() % width;
-    fruitY = rand() % height;
-    nTail++;
-  }
-}
-
-// Cross-platform sleep function
-void sleepcp(int milliseconds)
-{
-  clock_t time_end;
-  time_end = clock() + milliseconds * CLOCKS_PER_SEC / 1000;
-  while (clock() < time_end) {
-  }
-}
-
 
 int main() {
-  Setup();
-  int lap = 200;
-  while (!gameOver) {
-    Draw();
-    Input();
-    Logic();
-    sleepcp(lap);
+  /* Set up local variables */
+  bool game_over = false;
+  const int kSleepTime = 200;  /* Sleep time between frames in milliseconds */
+
+  std::cout << "Main menu" << std::endl <<
+            "WASD to move, q to quit" << std::endl <<
+            "Modes:" << std::endl <<
+            "1 - Classic snake" << std::endl <<
+            "2 - Grow (F) and shrink (X) mode" << std::endl <<
+            "Select mode:";
+
+  unsigned mode;
+  std::cin >> mode;
+
+  snake_game::clear_background();
+
+  snake_game::Field f(mode);
+
+  /* Main program loop */
+  while (!game_over) {
+    f.Draw();
+    f.Keyboard(&game_over);
+    f.Logic(&game_over);
+    snake_game::sleepcp(kSleepTime);
   }
+
+  std::cout << "===== GAME OVER =====" << std::endl;
   return 0;
 }

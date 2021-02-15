@@ -18,6 +18,7 @@
 #define __KBUTILS_H_
 /* Multiple include guards for cross-platform capabilities */
 
+/* Project namespace */
 namespace snake_game {
 /* Getting keyboard input without blocking function.
  * This is an alternative to the Windows _kbinit() method.

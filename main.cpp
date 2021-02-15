@@ -21,9 +21,16 @@
 #include <iostream>
 #include <vector>
 
+/* Project namespace */
 namespace snake_game {
+/* Snake character class */
 class Snake {
  public:
+  /* Snake constructor
+   *
+   * ARGUMENTS: None.
+   * RETURNS: None.
+   */
   Snake() : dir_(Direction::kStop) {
     tail_x_.resize(1);
     tail_y_.resize(1);
@@ -40,31 +47,78 @@ class Snake {
   };
 
  public:
+  /* x coordinates vector getter.
+   *
+   * ARGUMENTS:
+   *   - vector index:
+   *       const size_t idx;
+   * RETURNS: coordinate by index
+   */
   int GetTailX(const size_t idx) const {
     return tail_x_.at(idx);
   }
+  /* y coordinates vector getter.
+   *
+   * ARGUMENTS:
+   *   - vector index:
+   *       const size_t idx;
+   * RETURNS: coordinate by index
+   */
   int GetTailY(const size_t idx) const {
     return tail_y_.at(idx);
   }
 
+  /* x coordinates vector setter.
+   *
+   * ARGUMENTS:
+   *   - vector index:
+   *       const size_t idx;
+   *   - write value:
+   *       int value;
+   * RETURNS: None.
+   */
   void SetTailX(const size_t idx, int value) {
     if (idx < tail_x_.size()) {
       tail_x_[idx] = value;
     }
   }
+  /* y coordinates vector setter.
+   *
+   * ARGUMENTS:
+   *   - vector index:
+   *       const size_t idx;
+   *   - write value:
+   *       int value;
+   * RETURNS: None.
+   */
   void SetTailY(const size_t idx, int value) {
     if (idx < tail_y_.size()) {
       tail_y_[idx] = value;
     }
   }
 
-  size_t GetNTail() const {
+  /* Tail size getter.
+   *
+   * ARGUMENTS: None.
+   * RETURNS: current tail size
+   */
+  size_t TailSize() const {
     return tail_x_.size() - 1;
   }
+  /* Increase tail size function.
+   *
+   * ARGUMENTS: None.
+   * RETURNS: None.
+   */
   void IncreaseTail() {
     tail_x_.push_back(0);
     tail_y_.push_back(0);
   }
+  /* Decrease tail size function.
+   *
+   * ARGUMENTS: None.
+   * RETURNS: None.
+   */
   void DecreaseTail() {
     if (tail_x_.size() > 1) {
       tail_x_.pop_back();
@@ -72,22 +126,46 @@ class Snake {
     }
   }
 
+  /* Direction getter.
+   *
+   * ARGUMENTS: None.
+   * RETURNS: resulting direction
+   */
   Direction GetDir() const {
     return dir_;
   }
+  /* Direction setter.
+   *
+   * ARGUMENTS:
+   *   - direction to set:
+   *       Direction dir;
+   * RETURNS: None.
+   */
   void SetDir(Direction dir) {
     dir_ = dir;
   }
 
  private:
+  // todo combine tail vectors
   std::vector<int> tail_x_;
   std::vector<int> tail_y_;
 
   Direction dir_;
 };
 
+/* Field class */
 class Field : public Snake {
  public:
+  /* Field constructor
+   * Sets current game mode:
+   * 1 - Classic snake
+   * 2 - Grow (F) and shrink (X) mode
+   *
+   * ARGUMENTS:
+   *   - mode specifier:
+   *       unsigned mode;
+   * RETURNS: None.
+   */
   explicit Field(unsigned mode) : x_(width_ / 2), y_(height_ / 2), score_(0) {
     srand(static_cast<unsigned>(time(0)));
     fruit_x_ = rand() % width_;
@@ -102,7 +180,12 @@ class Field : public Snake {
     }
   }
 
-  void Draw() {
+  /* Field render function
+   *
+   * ARGUMENTS: None.
+   * RETURNS: None.
+   */
+  void Render() {
     clear_background();
     std::cout << std::endl;
     std::cout << " ";
@@ -124,7 +207,7 @@ class Field : public Snake {
           std::cout << "X";
         } else {
           bool print = false;
-          for (size_t k = 0; k < s_.GetNTail(); k++) {
+          for (size_t k = 0; k < s_.TailSize(); k++) {
             if (s_.GetTailX(k) == j && s_.GetTailY(k) == i) {
               std::cout << "o";
               print = true;
@@ -150,6 +233,11 @@ class Field : public Snake {
     std::cout << " Score:" << score_ << "     " << "x: " << x_ << " y: " << y_ << std::endl;
   }
 
+  /* Apply keyboard logic function
+   *
+   * ARGUMENTS: None.
+   * RETURNS: None.
+   */
   void Keyboard(bool *gameOver) {
     // todo make cross-platform
     if (_kbhit()) {
@@ -182,13 +270,18 @@ class Field : public Snake {
     }
   }
 
+  /* Apply game logic function
+   *
+   * ARGUMENTS: None.
+   * RETURNS: None.
+   */
   void Logic(bool *gameOver) {
     int prevX = s_.GetTailX(0);
     int prevY = s_.GetTailY(0);
     s_.SetTailX(0, x_);
     s_.SetTailY(0, y_);
 
-    for (size_t i = 1; i < s_.GetNTail(); i++) {
+    for (size_t i = 1; i < s_.TailSize(); i++) {
       int prev2X = s_.GetTailX(i);
       int prev2Y = s_.GetTailY(i);
 
@@ -213,7 +306,7 @@ class Field : public Snake {
       *gameOver = true;
     }
 
-    for (size_t i = 0; i < s_.GetNTail(); ++i) {
+    for (size_t i = 0; i < s_.TailSize(); ++i) {
       if (s_.GetTailX(i) == x_ && s_.GetTailY(i) == y_) {
         *gameOver = true;
       }
@@ -250,6 +343,7 @@ class Field : public Snake {
 
 }
 
+/* Main program fucntion */
 int main() {
   /* Set up local variables */
   bool game_over = false;
@@ -271,7 +365,7 @@ int main() {
 
   /* Main program loop */
   while (!game_over) {
-    f.Draw();
+    f.Render();
     f.Keyboard(&game_over);
     f.Logic(&game_over);
     snake_game::sleepcp(kSleepTime);
